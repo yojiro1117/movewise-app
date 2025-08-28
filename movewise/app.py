@@ -30,7 +30,6 @@ from .optimisation import nearest_neighbor, two_opt
 from .schedule import schedule_route
 from .visualisation import create_folium_map
 
-import pandas as pd
 import requests
 
 
@@ -129,7 +128,7 @@ def format_schedule_text(schedule, names, total_duration_s, toll_cost) -> str:
     total_m = int((total_duration_s % 3600) // 60)
     lines.append(f"\nTotal travel time: {total_h}h {total_m}m")
     if toll_cost > 0:
-        lines.append(f"Total toll cost: \u00a5{int(toll_cost)}")
+        lines.append(f"Total toll cost: ¥{int(toll_cost)}")
     return "\n".join(lines)
 
 
@@ -167,7 +166,7 @@ def send_line_message(user_id: str, message: str) -> bool:
 
 def main():
     st.set_page_config(page_title="MoveWise", layout="wide")
-    st.title("\ud83d\udeb6 MoveWise Route Planner")
+    st.title("🚶 MoveWise Route Planner")
     # Authentication
     if not authenticate():
         st.stop()
@@ -231,7 +230,7 @@ def main():
         # Display summary
         st.success(f"Optimised by {criterion}. Total travel time: {int(total_duration_s//3600)}h {int((total_duration_s%3600)//60)}m")
         if toll_cost > 0:
-            st.info(f"Estimated toll cost: \u00a5{int(toll_cost)}")
+            st.info(f"Estimated toll cost: ¥{int(toll_cost)}")
         # Display schedule table
         table_data = []
         for i, stop in enumerate(schedule, start=1):
@@ -244,8 +243,7 @@ def main():
                 "Status": stop.status,
             }
             table_data.append(row)
-        df = pd.DataFrame(table_data)
-        st.table(df)
+        st.table(table_data)
         # Display map
         fol_map = create_folium_map(route, coords, names)
         folium_static(fol_map, width=700, height=500)
