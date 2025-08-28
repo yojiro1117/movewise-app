@@ -207,47 +207,78 @@ def main():
         # Add explicit start location fields to allow users to specify a departure point
         st.markdown("#### 出発地点")
         start_name = st.text_input("出発地点 名称", key="start_name")
-        start_addr = st.text_input("出発地点 住所", key="start_addr", help="住所が不明な場合、名称のみ入力してください")
+        start_addr = st.text_input(
+            "出発地点 住所", key="start_addr", help="住所が不明な場合、名称のみ入力してください"
+        )
+        # If only a name is provided for the start, fall back to a more commonly searched address (e.g. station)
+        if not start_addr.strip() and start_name.strip():
+            # Define simple fallback mappings from place names to well‑known landmarks/stations
+            fallback_map = {
+                "博多": "博多駅",
+                "天神": "天神駅",
+                "梅田": "梅田駅",
+                "なんば": "難波駅",
+                "札幌": "札幌駅",
+                "仙台": "仙台駅",
+                "京都": "京都駅",
+                "大阪": "大阪駅",
+                "名古屋": "名古屋駅",
+                "東京": "東京駅",
+            }
+            start_addr = fallback_map.get(start_name.strip(), start_name.strip())
 
         # Input fields for each stop
         for i in range(int(n_places)):
-            st.markdown(f"#### 地点 {i+1}")
-            # Place name and address on the same row to reduce vertical scrolling
-            col_name, col_addr = st.columns([1, 3])
-            with col_name:
-                name = st.text_input("名称", key=f"name_{i}")
-            with col_addr:
-                addr = st.text_input("住所", key=f"addr_{i}")
-            # If address is left empty but a name is provided, use the name as the address for geocoding
-            if not addr.strip() and name.strip():
-                addr = name.strip()
-            stay = st.number_input("滞在時間（分）", min_value=0, max_value=600, value=30, key=f"stay_{i}")
-            # Opening and closing hours side‑by‑side
-            col_open_from, col_open_to = st.columns(2)
-            with col_open_from:
-                open_from = st.text_input("開店時刻 (HH:MM)", value="", key=f"open_from_{i}")
-            with col_open_to:
-                open_to = st.text_input("閉店時刻 (HH:MM)", value="", key=f"open_to_{i}")
-            names.append(name)
-            addresses.append(addr)
-            stay_durations.append(int(stay))
-            if open_from.strip() and open_to.strip():
-                open_hours.append((open_from.strip(), open_to.strip()))
-            else:
-                open_hours.append(None)
+            # Use an expander for each location to reduce vertical scrolling when many locations are added
+            with st.expander(f"地点 {i+1}", expanded=True if int(n_places) <= 3 else False):
+                # Place name and address on the same row to reduce vertical scrolling
+                col_name, col_addr = st.columns([1, 3])
+                with col_name:
+                    name = st.text_input("名称", key=f"name_{i}")
+                with col_addr:
+                    addr = st.text_input("住所", key=f"addr_{i}")
+                # If address is left empty but a name is provided, fall back to a commonly searched alternative
+                if not addr.strip() and name.strip():
+                    fallback_map = {
+                        "博多": "博多駅",
+                        "天神": "天神駅",
+                        "梅田": "梅田駅",
+                        "なんば": "難波駅",
+                        "札幌": "札幌駅",
+                        "仙台": "仙台駅",
+                        "京都": "京都駅",
+                        "大阪": "大阪駅",
+                        "名古屋": "名古屋駅",
+                        "東京": "東京駅",
+                    }
+                    addr = fallback_map.get(name.strip(), name.strip())
+                stay = st.number_input(
+                    "滞在時間（分）", min_value=0, max_value=600, value=30, key=f"stay_{i}"
+                )
+                # Opening and closing hours side‑by‑side
+                col_open_from, col_open_to = st.columns(2)
+                with col_open_from:
+                    open_from = st.text_input("開店時刻 (HH:MM)", value="", key=f"open_from_{i}")
+                with col_open_to:
+                    open_to = st.text_input("閉店時刻 (HH:MM)", value="", key=f"open_to_{i}")
+                names.append(name)
+                addresses.append(addr)
+                stay_durations.append(int(stay))
+                if open_from.strip() and open_to.strip():
+                    open_hours.append((open_from.strip(), open_to.strip()))
+                else:
+                    open_hours.append(None)
 
         # Insert start location at beginning if provided
         if start_name.strip() or start_addr.strip():
-            # If address not provided but name is, use name as address
-            if not start_addr.strip() and start_name.strip():
-                start_addr = start_name.strip()
             names = [start_name] + names
             addresses = [start_addr] + addresses
             stay_durations = [0] + stay_durations
             open_hours = [None] + open_hours
 
         depart_time = st.text_input("出発時刻 (HH:MM)", value="09:00")
-        mode = st.selectbox(
+        # Use a radio button instead of a selectbox to display all transport mode options clearly
+        mode = st.radio(
             "移動手段",
             [
                 "徒歩",
@@ -256,6 +287,7 @@ def main():
                 "車（一部有料道路）",
                 "公共交通機関",
             ],
+            horizontal=True,
         )
         threshold = st.slider(
             "時間差がこの割合以内なら距離最小化を優先 (%)",
