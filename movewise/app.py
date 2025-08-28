@@ -24,6 +24,20 @@ from typing import List, Optional
 import streamlit as st
 from streamlit_folium import folium_static
 
+import os
+import sys
+# Ensure the package modules can be imported when run as a script. When the app is executed
+# as a standalone script (e.g., via `streamlit run movewise/app.py`), Python may not
+# automatically add the package directories to `sys.path`. Add both the current
+# directory and its parent to the module search path so that `movewise` and its
+# submodules can be imported correctly.
+current_dir = os.path.dirname(__file__)
+parent_dir = os.path.dirname(current_dir)
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
+
 from movewise.geocode import geocode_address
 from movewise.routing import compute_distance_matrix, total_toll_cost
 from movewise.optimisation import nearest_neighbor, two_opt
