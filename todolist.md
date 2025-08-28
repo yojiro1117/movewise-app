@@ -1,0 +1,15 @@
+- [x] Create project structure.
+- [x] Implement geocoding using geopy/Nominatim.
+- [x] Implement routing via OSRM and fallback to Haversine.
+- [x] Implement optimisation heuristics (nearest neighbour + 2-opt).
+- [x] Implement schedule generation with opening hours warnings.
+- [x] Implement Folium map visualisation.
+- [x] Build Streamlit UI with dynamic forms.
+- [x] Implement simple email-based authentication (placeholder for Google OAuth).
+- [x] Integrate LINE Messaging API for itinerary push notifications.
+- [x] Write unit tests and small simulation.
+- [x] Prepare README and secrets template.
+- [ ] Integrate full Google OAuth flow (pending).
+- [ ] Implement public transport routing (GTFS/HTML scraping/manual entry).
+- [ ] Implement toll database lookup.
+- [ ] Add 100-case simulation and logging of success rate and average generation time.
