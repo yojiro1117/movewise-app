@@ -203,13 +203,31 @@ def main():
         addresses: List[str] = []
         stay_durations: List[int] = []
         open_hours: List[Optional[tuple]] = []
+
+        # Add explicit start location fields to allow users to specify a departure point
+        st.markdown("#### 出発地点")
+        start_name = st.text_input("出発地点 名称", key="start_name")
+        start_addr = st.text_input("出発地点 住所", key="start_addr", help="住所が不明な場合、名称のみ入力してください")
+
+        # Input fields for each stop
         for i in range(int(n_places)):
             st.markdown(f"#### 地点 {i+1}")
-            name = st.text_input("名称", key=f"name_{i}")
-            addr = st.text_input("住所", key=f"addr_{i}")
+            # Place name and address on the same row to reduce vertical scrolling
+            col_name, col_addr = st.columns([1, 3])
+            with col_name:
+                name = st.text_input("名称", key=f"name_{i}")
+            with col_addr:
+                addr = st.text_input("住所", key=f"addr_{i}")
+            # If address is left empty but a name is provided, use the name as the address for geocoding
+            if not addr.strip() and name.strip():
+                addr = name.strip()
             stay = st.number_input("滞在時間（分）", min_value=0, max_value=600, value=30, key=f"stay_{i}")
-            open_from = st.text_input("開店時刻 (HH:MM)", value="", key=f"open_from_{i}")
-            open_to = st.text_input("閉店時刻 (HH:MM)", value="", key=f"open_to_{i}")
+            # Opening and closing hours side‑by‑side
+            col_open_from, col_open_to = st.columns(2)
+            with col_open_from:
+                open_from = st.text_input("開店時刻 (HH:MM)", value="", key=f"open_from_{i}")
+            with col_open_to:
+                open_to = st.text_input("閉店時刻 (HH:MM)", value="", key=f"open_to_{i}")
             names.append(name)
             addresses.append(addr)
             stay_durations.append(int(stay))
@@ -217,13 +235,37 @@ def main():
                 open_hours.append((open_from.strip(), open_to.strip()))
             else:
                 open_hours.append(None)
+
+        # Insert start location at beginning if provided
+        if start_name.strip() or start_addr.strip():
+            # If address not provided but name is, use name as address
+            if not start_addr.strip() and start_name.strip():
+                start_addr = start_name.strip()
+            names = [start_name] + names
+            addresses = [start_addr] + addresses
+            stay_durations = [0] + stay_durations
+            open_hours = [None] + open_hours
+
         depart_time = st.text_input("出発時刻 (HH:MM)", value="09:00")
         mode = st.selectbox(
             "移動手段",
-            ["徒歩", "車（有料道路なし）", "車（有料道路使用）", "車（一部有料道路）", "公共交通機関"],
+            [
+                "徒歩",
+                "車（有料道路なし）",
+                "車（有料道路使用）",
+                "車（一部有料道路）",
+                "公共交通機関",
+            ],
         )
-        threshold = st.slider("時間差がこの割合以内なら距離最小化を優先 (%)", min_value=0, max_value=50, value=10)
-        user_line_id = st.text_input("LINEユーザーID（任意）", value="", help="入力すると、行程表をLINEに送信します。")
+        threshold = st.slider(
+            "時間差がこの割合以内なら距離最小化を優先 (%)",
+            min_value=0,
+            max_value=50,
+            value=10,
+        )
+        user_line_id = st.text_input(
+            "LINEユーザーID（任意）", value="", help="入力すると、行程表をLINEに送信します。"
+        )
         generate = st.form_submit_button("プランを生成")
 
     if generate:
