@@ -1,0 +1,13 @@
+streamlit>=1.23,<2
+pandas>=1.5,<2
+numpy>=1.22,<2
+requests>=2.31,<3
+geopy>=2.3,<3
+folium>=0.14,<1
+streamlit_folium>=0.11,<1
+pytz>=2023.3
+python-dateutil>=2.8,<3
+beautifulsoup4>=4.12,<5
+lxml>=4.9,<5
+scipy>=1.11,<2
+python-levenshtein>=0.21,<1
