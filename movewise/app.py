@@ -382,14 +382,21 @@ def main():
                     "滞在時間（分）", min_value=0, max_value=600, value=30, key=f"stay_{i}"
                 )
                 # 営業時間（任意）を左右に配置し、ヘルプを表示
+                # ユーザーが混乱しないよう、ラベルを具体的に「営業開始時刻」「営業終了時刻」と表現し、ツールチップで目的を説明する。
                 col_open_from, col_open_to = st.columns(2)
                 with col_open_from:
                     open_from = st.text_input(
-                        "開始時刻 (HH:MM)", value="", key=f"open_from_{i}", help="その施設の営業開始時刻。未入力可"
+                        "営業開始時刻 (HH:MM)",
+                        value="",
+                        key=f"open_from_{i}",
+                        help="その施設の営業開始時刻。到着が営業時間より前の場合はステータスが\"早すぎ\"と表示されます。未入力可"
                     )
                 with col_open_to:
                     open_to = st.text_input(
-                        "終了時刻 (HH:MM)", value="", key=f"open_to_{i}", help="その施設の営業終了時刻。未入力可"
+                        "営業終了時刻 (HH:MM)",
+                        value="",
+                        key=f"open_to_{i}",
+                        help="その施設の営業終了時刻。到着が営業時間より後の場合はステータスが\"営業時間外\"と表示されます。未入力可"
                     )
                 # この地点までの移動手段選択肢（前の地点からこの地点への移動）
                 mode = st.radio(
