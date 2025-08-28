@@ -61,9 +61,10 @@ def authenticate() -> bool:
         st.session_state["authenticated"] = False
     # Only display the login form if the user is not yet authenticated.
     if not st.session_state["authenticated"]:
-        st.markdown("### Login")
-        email = st.text_input("Enter your email to authenticate:", value="")
-        if st.button("Login"):
+        # ログインフォーム（日本語）
+        st.markdown("### ログイン")
+        email = st.text_input("認証用メールアドレスを入力してください:", value="")
+        if st.button("ログイン"):
             # When no allowed email is configured in secrets, permit any non‑empty email.  Otherwise
             # require an exact (case‑insensitive) match with the configured allowed email.  Trim
             # whitespace on both sides to avoid accidental mismatch.
@@ -72,7 +73,7 @@ def authenticate() -> bool:
             if (not allowed_stripped and entered) or (entered.lower() == allowed_stripped and entered):
                 st.session_state["authenticated"] = True
             else:
-                st.error("Access denied. You are not authorised to use this app.")
+                    st.error("アクセスが拒否されました。このアプリを使用する権限がありません。")
     # Return the current authentication state so callers can proceed accordingly.
     return st.session_state.get("authenticated", False)
 
@@ -189,26 +190,26 @@ def send_line_message(user_id: str, message: str) -> bool:
 
 def main():
     st.set_page_config(page_title="MoveWise", layout="wide")
-    st.title("🚶 MoveWise Route Planner")
+    st.title("🚶 MoveWise ルートプランナー")
     # Authentication
     if not authenticate():
         st.stop()
-    st.success("Logged in successfully.")
+    st.success("ログインに成功しました。")
     # Input form
     with st.form("route_form"):
-        st.subheader("Route parameters")
-        n_places = st.number_input("Number of locations", min_value=2, max_value=20, value=3, step=1)
+        st.subheader("ルートパラメータ")
+        n_places = st.number_input("地点数", min_value=2, max_value=20, value=3, step=1)
         names: List[str] = []
         addresses: List[str] = []
         stay_durations: List[int] = []
         open_hours: List[Optional[tuple]] = []
         for i in range(int(n_places)):
-            st.markdown(f"#### Location {i+1}")
-            name = st.text_input(f"Name", key=f"name_{i}")
-            addr = st.text_input(f"Address", key=f"addr_{i}")
-            stay = st.number_input("Stay duration (minutes)", min_value=0, max_value=600, value=30, key=f"stay_{i}")
-            open_from = st.text_input("Open from (HH:MM)", value="", key=f"open_from_{i}")
-            open_to = st.text_input("Open to (HH:MM)", value="", key=f"open_to_{i}")
+            st.markdown(f"#### 地点 {i+1}")
+            name = st.text_input("名称", key=f"name_{i}")
+            addr = st.text_input("住所", key=f"addr_{i}")
+            stay = st.number_input("滞在時間（分）", min_value=0, max_value=600, value=30, key=f"stay_{i}")
+            open_from = st.text_input("開店時刻 (HH:MM)", value="", key=f"open_from_{i}")
+            open_to = st.text_input("閉店時刻 (HH:MM)", value="", key=f"open_to_{i}")
             names.append(name)
             addresses.append(addr)
             stay_durations.append(int(stay))
@@ -216,29 +217,30 @@ def main():
                 open_hours.append((open_from.strip(), open_to.strip()))
             else:
                 open_hours.append(None)
-        depart_time = st.text_input("Departure time (HH:MM)", value="09:00")
+        depart_time = st.text_input("出発時刻 (HH:MM)", value="09:00")
         mode = st.selectbox(
-            "Mode of transport",
-            ["Walk", "Car (no tolls)", "Car (use tolls)", "Car (some tolls)", "Public Transport"],
+            "移動手段",
+            ["徒歩", "車（有料道路なし）", "車（有料道路使用）", "車（一部有料道路）", "公共交通機関"],
         )
-        threshold = st.slider("Force distance minimisation if travel time difference is within (%)", min_value=0, max_value=50, value=10)
-        user_line_id = st.text_input("Your LINE user ID (optional)", value="", help="If provided, the itinerary will be sent via LINE when generated.")
-        generate = st.form_submit_button("Generate Plan")
+        threshold = st.slider("時間差がこの割合以内なら距離最小化を優先 (%)", min_value=0, max_value=50, value=10)
+        user_line_id = st.text_input("LINEユーザーID（任意）", value="", help="入力すると、行程表をLINEに送信します。")
+        generate = st.form_submit_button("プランを生成")
 
     if generate:
-        with st.spinner("Geocoding addresses..."):
+        with st.spinner("住所のジオコーディング中…"):
             coords = geocode_addresses(addresses)
-        if coords is None:
-            st.error("One or more addresses could not be geocoded. Please check your inputs.")
-            st.stop()
+            if coords is None:
+                st.error("一部の住所がジオコーディングできませんでした。入力を確認してください。")
+                st.stop()
         # Determine mode key
-        if mode.startswith("Walk"):
-            mode_key = "walk"
-        elif mode.startswith("Car"):
-            mode_key = "drive"
-        else:
-            mode_key = "transit"
-        with st.spinner("Computing routes and schedule..."):
+            # 移動手段に応じてキーを決定（日本語に対応）
+            if mode.startswith("徒歩"):
+                mode_key = "walk"
+            elif mode.startswith("車"):
+                mode_key = "drive"
+            else:
+                mode_key = "transit"
+        with st.spinner("ルートとスケジュールを計算中…"):
             result = compute_routes_and_select(coords, stay_durations, open_hours, depart_time, mode_key, threshold)
         route = result["route"]
         schedule = result["schedule"]
@@ -247,13 +249,16 @@ def main():
         dist_matrix = result["dist_matrix"]
         dur_matrix = result["dur_matrix"]
         # Compute toll cost if car
-        toll_cost = 0.0
-        if mode_key == "drive" and "no tolls" not in mode.lower():
-            toll_cost = total_toll_cost(route, coords)
+            toll_cost = 0.0
+            # 車の場合に「なし」が含まれていない場合は有料道路料金を計算する
+            if mode_key == "drive" and ("なし" not in mode):
+                toll_cost = total_toll_cost(route, coords)
         # Display summary
-        st.success(f"Optimised by {criterion}. Total travel time: {int(total_duration_s//3600)}h {int((total_duration_s%3600)//60)}m")
+        # 日本語の最適化基準名を組み立て
+        crit_jp = "距離" if criterion == "distance" else "時間"
+        st.success(f"{crit_jp}で最適化されました。総移動時間: {int(total_duration_s//3600)}時間 {int((total_duration_s%3600)//60)}分")
         if toll_cost > 0:
-            st.info(f"Estimated toll cost: ¥{int(toll_cost)}")
+            st.info(f"推定有料道路料金: ¥{int(toll_cost)}")
         # Display schedule table
         table_data = []
         for i, stop in enumerate(schedule, start=1):
@@ -273,13 +278,13 @@ def main():
         folium_static(fol_map, width=700, height=500)
         # Itinerary text
         itinerary_text = format_schedule_text(schedule, names, total_duration_s, toll_cost)
-        st.text_area("Itinerary", itinerary_text, height=200)
+        st.text_area("行程表", itinerary_text, height=200)
         # Send via LINE
         if user_line_id.strip():
             if send_line_message(user_line_id.strip(), itinerary_text):
-                st.success("Itinerary sent via LINE successfully.")
+                st.success("行程表をLINEに送信しました。")
             else:
-                st.error("Failed to send itinerary via LINE. Check your LINE credentials and user ID.")
+                st.error("行程表のLINE送信に失敗しました。LINEの認証情報とユーザーIDを確認してください。")
 
 
 if __name__ == "__main__":
