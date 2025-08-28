@@ -56,16 +56,24 @@ def authenticate() -> bool:
     proper Google OAuth as per the specification.
     """
     allowed = st.secrets.get("ALLOWED_EMAIL", "")
+    # Initialise the authentication state the first time this function runs.
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
+    # Only display the login form if the user is not yet authenticated.
     if not st.session_state["authenticated"]:
         st.markdown("### Login")
         email = st.text_input("Enter your email to authenticate:", value="")
         if st.button("Login"):
-            if email.strip().lower() == allowed.strip().lower() and email:
+            # When no allowed email is configured in secrets, permit any non‑empty email.  Otherwise
+            # require an exact (case‑insensitive) match with the configured allowed email.  Trim
+            # whitespace on both sides to avoid accidental mismatch.
+            entered = email.strip()
+            allowed_stripped = allowed.strip().lower()
+            if (not allowed_stripped and entered) or (entered.lower() == allowed_stripped and entered):
                 st.session_state["authenticated"] = True
             else:
                 st.error("Access denied. You are not authorised to use this app.")
+    # Return the current authentication state so callers can proceed accordingly.
     return st.session_state.get("authenticated", False)
 
 
