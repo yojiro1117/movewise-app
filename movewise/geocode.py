@@ -21,54 +21,38 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Optional, Tuple
 
-try:
-    from geopy.geocoders import Nominatim
-    from geopy.exc import GeocoderTimedOut, GeocoderServiceError
-except ImportError:
-    Nominatim = None  # type: ignore
-
-_geocoder: Optional[Nominatim] = None
-
-def _get_geocoder() -> Nominatim:
-    """Return a singleton Nominatim geocoder instance."""
-    global _geocoder
-    if _geocoder is None:
-        if Nominatim is None:
-            raise RuntimeError(
-                "geopy is required for geocoding. Please install it via pip install geopy."
-            )
-        # Provide a custom user agent to comply with Nominatim's usage policy.
-        _geocoder = Nominatim(user_agent="movewise_app")
-    return _geocoder
+import requests
 
 
 @lru_cache(maxsize=128)
 def geocode_address(address: str) -> Optional[Tuple[float, float]]:
-    """Geocode an address and return (latitude, longitude) or ``None``.
+    """Geocode an address using the OpenStreetMap Nominatim API.
 
-    To reduce API calls, results are cached in memory. If a timeout
-    occurs, the request is retried once. Errors are swallowed and
-    ``None`` is returned.
+    This function sends a GET request to the public Nominatim service to
+    convert a free‑form address into geographic coordinates. Results are
+    cached in memory to avoid repeated network calls for the same query.
 
     Args:
-        address: Free form text to geocode.
+        address: A free‑form location description to geocode.
 
     Returns:
-        A tuple of (lat, lon) if geocoding succeeds, otherwise ``None``.
+        A tuple ``(latitude, longitude)`` if the geocoding succeeds, or
+        ``None`` if no result is found or an error occurs.
     """
-    geocoder = _get_geocoder()
+    url = "https://nominatim.openstreetmap.org/search"
+    params = {"q": address, "format": "json", "limit": 1}
+    headers = {"User-Agent": "movewise_app"}
     try:
-        location = geocoder.geocode(address, timeout=10)
-        if location:
-            return location.latitude, location.longitude
-    except (GeocoderTimedOut, GeocoderServiceError):
-        # retry once
-        try:
-            location = geocoder.geocode(address, timeout=20)
-            if location:
-                return location.latitude, location.longitude
-        except Exception:
-            return None
+        resp = requests.get(url, params=params, headers=headers, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        if data:
+            try:
+                lat = float(data[0]["lat"])
+                lon = float(data[0]["lon"])
+                return lat, lon
+            except (KeyError, ValueError, TypeError):
+                return None
     except Exception:
         return None
     return None
