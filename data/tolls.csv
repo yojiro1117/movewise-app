@@ -1,0 +1,2 @@
+road_name,from_junc,to_junc,segment_km,fee_jpy,rule,notes
+Example Road,Start IC,End IC,10.0,500,flat,"Sample row; replace with real toll data for accuracy."
