@@ -266,8 +266,8 @@ def main():
                 "Status": stop.status,
             }
             table_data.append(row)
-        df = pd.DataFrame(table_data)
-        st.table(df)
+        # Display schedule as a table directly; pandas is no longer required.
+        st.table(table_data)
         # Display map
         fol_map = create_folium_map(route, coords, names)
         folium_static(fol_map, width=700, height=500)
