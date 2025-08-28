@@ -249,10 +249,10 @@ def main():
         dist_matrix = result["dist_matrix"]
         dur_matrix = result["dur_matrix"]
         # Compute toll cost if car
-            toll_cost = 0.0
-            # 車の場合に「なし」が含まれていない場合は有料道路料金を計算する
-            if mode_key == "drive" and ("なし" not in mode):
-                toll_cost = total_toll_cost(route, coords)
+        toll_cost = 0.0
+        # 車の場合に「なし」が含まれていない場合は有料道路料金を計算する
+        if mode_key == "drive" and ("なし" not in mode):
+            toll_cost = total_toll_cost(route, coords)
         # Display summary
         # 日本語の最適化基準名を組み立て
         crit_jp = "距離" if criterion == "distance" else "時間"
