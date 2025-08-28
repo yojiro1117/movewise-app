@@ -24,12 +24,13 @@ from typing import List, Optional
 import streamlit as st
 from streamlit_folium import folium_static
 
-from .geocode import geocode_address
-from .routing import compute_distance_matrix, total_toll_cost
-from .optimisation import nearest_neighbor, two_opt
-from .schedule import schedule_route
-from .visualisation import create_folium_map
+from movewise.geocode import geocode_address
+from movewise.routing import compute_distance_matrix, total_toll_cost
+from movewise.optimisation import nearest_neighbor, two_opt
+from movewise.schedule import schedule_route
+from movewise.visualisation import create_folium_map
 
+# pandas is no longer used in this version
 import requests
 
 
@@ -243,7 +244,8 @@ def main():
                 "Status": stop.status,
             }
             table_data.append(row)
-        st.table(table_data)
+        df = pd.DataFrame(table_data)
+        st.table(df)
         # Display map
         fol_map = create_folium_map(route, coords, names)
         folium_static(fol_map, width=700, height=500)
